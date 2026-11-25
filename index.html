@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REMNANT Placement Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a shipped mobile app, dense and tool-like
+   IDEA: an axonometric cut-away model of the pop-up room, built like a diorama
+   PICTURE: the isometric room — draggable furniture, rotatable view, material callouts
+   COLOUR and TYPE: A = blueprint (white, #0000DB, Inter) · B = paper (kraft, warm skins, Patrick Hand)
+   LAYOUT: phone centred, compact legend beside it; stacks on narrow screens */
+:root{color-scheme:light;--bg:#ECECEC;--ink:#111;--acc:#0000DB;--paper:#fff;--line:#0000DB;--muted:#6b6b6b;--soft:#F2F2F2;--chip:#fff;--chipOn:#0000DB;--font:"Inter",system-ui,sans-serif;--hand:"Inter",sans-serif;--rad:0px;--sheet:#fff;--ok:#0000DB;--bad:#D00000}
+body.paper{--bg:#E3D7C1;--ink:#3B2E22;--acc:#B5543C;--paper:#F3EDE1;--line:#4A3826;--muted:#8A7560;--soft:#EDE3D2;--chip:#E4D3B4;--chipOn:#7E9A6E;--hand:"Patrick Hand","Inter",sans-serif;--rad:8px;--sheet:#FFFDF7;--ok:#5E7F4E}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 var(--font);overflow-x:clip;transition:background .3s}
+button{font:inherit;color:inherit}
+.wrap{display:flex;gap:36px;justify-content:center;align-items:flex-start;padding:28px 16px 40px;flex-wrap:wrap}
+.side{width:260px;padding-top:20px}
+.side h1{font:700 26px/1.1 var(--font);margin:0 0 16px;letter-spacing:-.01em}
+body.paper .side h1{font:400 34px/1 var(--hand)}
+.sw{display:flex;border:1.5px solid var(--ink);margin:0 0 18px;border-radius:var(--rad);overflow:hidden}
+.sw button{flex:1;padding:10px 6px;border:0;background:transparent;font-weight:600;font-size:12px;cursor:pointer;min-height:44px}
+.sw button.on{background:var(--ink);color:var(--bg)}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:12px;margin:0}
+.keys dt{font-weight:700}.keys dd{margin:0;color:var(--muted)}
+/* phone */
+.phone{user-select:none;-webkit-user-select:none;width:390px;max-width:100%;height:844px;background:var(--paper);border:10px solid #111;border-radius:46px;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px rgba(0,0,0,.35);display:flex;flex-direction:column;transition:background .3s}
+.status{display:flex;justify-content:space-between;padding:9px 24px 0;font:600 13px Inter,sans-serif;height:32px;flex:none}
+.hdr{display:flex;align-items:center;gap:8px;padding:2px 10px 6px;flex:none}
+.ib{width:30px;height:30px;border:0;background:none;display:grid;place-items:center;cursor:pointer;border-radius:var(--rad)}
+.ib svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ib:hover{background:var(--soft)}
+.ib:disabled{opacity:.3;cursor:default}
+.hdr .t{flex:1;line-height:1.15}.hdr .t b{display:block;font-size:14px;font-family:var(--hand);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.paper .hdr .t b{font-size:19px;font-weight:400}
+.hdr .t small{font-size:10.5px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av{display:flex}.av i{width:22px;height:22px;border-radius:50%;border:2px solid var(--paper);margin-left:-6px;display:grid;place-items:center;font:700 9px Inter;color:#fff;font-style:normal}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:0 12px 6px;flex:none}
+.steps div{font-size:9.5px;font-weight:600;color:var(--muted);border-top:3px solid var(--soft);padding-top:3px;white-space:nowrap}
+body.paper .steps div{font:400 13px var(--hand)}
+.steps .done{border-color:var(--ink);color:var(--ink)}.steps .cur{border-color:var(--acc);color:var(--acc)}
+.tb{display:flex;align-items:center;gap:4px;padding:5px 10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);flex:none}
+body.paper .tb{border-color:#d8c7a8}
+.seg{display:flex;border:1px solid var(--ink);border-radius:var(--rad);overflow:hidden}
+.seg button{border:0;background:var(--paper);font-size:10.5px;font-weight:600;padding:4px 7px;cursor:pointer;border-left:1px solid var(--ink)}
+.seg button:first-child{border-left:0}
+body.paper .seg button{font:400 14px var(--hand);padding:2px 7px}
+.seg button.on{background:var(--chipOn);color:#fff}
+.seg button.dis{color:var(--muted)}
+.tb .sp{flex:1}
+.tb .ib{width:26px;height:26px}.tb .ib svg{width:16px;height:16px}
+.ib.on{background:var(--chipOn);color:#fff}
+.stage{position:relative;flex:1;min-height:250px;touch-action:none;background:var(--paper)}
+.stage>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ov{position:absolute;display:flex;gap:4px;z-index:2}
+.pill{font-size:10px;font-weight:600;padding:3px 7px;background:var(--sheet);border:1px solid var(--ink);border-radius:var(--rad);white-space:nowrap}
+body.paper .pill{font:400 13px var(--hand);border:0;background:var(--chip);padding:1px 7px}
+.pill.ok{color:var(--ok)}.pill.bad{color:var(--bad);border-color:var(--bad)}
+.zoom{right:8px;bottom:8px;flex-direction:column;gap:0;border:1px solid var(--ink);background:var(--sheet);border-radius:var(--rad);overflow:hidden}
+.zoom button{width:28px;height:26px;border:0;background:none;font:600 15px Inter;cursor:pointer}
+.zoom button+button{border-top:1px solid var(--ink)}
+.tool{position:absolute;display:none;gap:0;background:#111;border-radius:var(--rad);z-index:3;transform:translate(-50%,0)}
+body.paper .tool{background:#3B2E22}
+.tool.show{display:flex}
+.tool button{border:0;background:none;color:#fff;width:30px;height:28px;display:grid;place-items:center;cursor:pointer}
+.tool svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.toast{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);font-size:11px;font-weight:600;background:#111;color:#fff;padding:5px 10px;border-radius:var(--rad);opacity:0;transition:opacity .2s;pointer-events:none;z-index:4;white-space:nowrap}
+body.paper .toast{font:400 15px var(--hand)}
+.toast.show{opacity:1}.toast.bad{background:var(--bad)}
+/* inspector */
+.insp{flex:none;display:flex;gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--line);background:var(--sheet);min-height:62px}
+body.paper .insp{border-color:#d8c7a8}
+.insp .th{width:48px;height:48px;flex:none;background:var(--soft);border-radius:var(--rad)}
+.insp .th svg{width:100%;height:100%}
+.insp .mid{flex:1;line-height:1.25}
+.insp b{font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.paper .insp b{font:400 16px var(--hand)}
+.insp small{display:block;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dots{display:flex;gap:5px;margin-top:3px;align-items:center}
+.dot{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.25);cursor:pointer;padding:0}
+.dot.on{outline:2px solid var(--acc);outline-offset:2px}
+.dots span{font-size:10px;font-weight:600;margin-left:2px}
+body.paper .dots span{font:400 13px var(--hand)}
+.insp .rt{text-align:right;flex:none}
+.insp .rt b{font-size:13px}
+.mini{border:1px solid var(--ink);background:var(--paper);font-size:10px;font-weight:600;padding:3px 6px;margin-top:3px;cursor:pointer;border-radius:var(--rad)}
+body.paper .mini{font:400 13px var(--hand)}
+.insp.empty{color:var(--muted);font-size:11px}
+/* tray */
+.tray{flex:none;background:var(--sheet);border-top:1px solid var(--line);padding:6px 10px 6px;display:flex;flex-direction:column;gap:5px}
+body.paper .tray{border-color:#d8c7a8}
+.trh{display:flex;align-items:center;gap:6px}
+.trh b{font-size:13px}body.paper .trh b{font:400 18px var(--hand)}
+.search{flex:1;display:flex;align-items:center;gap:4px;border:1px solid var(--ink);padding:0 6px;height:26px;border-radius:var(--rad);background:var(--paper)}
+.search svg{width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:2}
+.search input{border:0;background:none;outline:0;font:12px var(--font);width:100%;color:var(--ink)}
+.fl{display:flex;gap:4px;overflow-x:auto}
+.chip{border:1px solid var(--ink);background:var(--chip);font-size:10px;font-weight:600;padding:2px 7px;cursor:pointer;border-radius:var(--rad);white-space:nowrap;min-height:22px}
+body.paper .chip{border:0;font:400 14px var(--hand);padding:0 8px}
+.chip.on{background:var(--chipOn);color:#fff;border-color:var(--chipOn)}
+.cards{display:flex;gap:7px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:2px}
+.card{flex:none;width:92px;scroll-snap-align:start;border:1px solid var(--ink);background:var(--paper);cursor:grab;padding:0;text-align:left;border-radius:var(--rad);touch-action:none;position:relative}
+body.paper .card{border:0;background:#fff;box-shadow:0 2px 4px rgba(60,40,20,.2)}
+.card svg{display:block;width:100%;height:46px;pointer-events:none;padding-top:3px}
+.card .cb{padding:2px 5px 4px;font-size:9.5px;line-height:1.25;pointer-events:none}
+.card .cb b{display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.paper .card .cb b{font:400 14px/1.05 var(--hand)}
+.card .cb span{color:var(--muted);display:block;white-space:nowrap}
+.card .g{position:absolute;top:3px;left:3px;font-size:8.5px;font-weight:700;border:1px solid var(--ink);padding:0 3px;background:var(--paper);pointer-events:none}
+.card .n{position:absolute;top:3px;right:3px;font-size:8.5px;font-weight:700;background:var(--acc);color:#fff;padding:0 4px;pointer-events:none}
+.sum{display:flex;align-items:center;gap:8px;font-size:10.5px}
+body.paper .sum{font:400 14px var(--hand)}
+.sum .m{flex:1;height:5px;background:var(--soft);position:relative}
+.sum .m i{position:absolute;inset:0 auto 0 0;background:var(--acc)}
+.cta{flex:none;display:flex;gap:6px}
+.btn{border:1px solid var(--ink);background:#E0E0E0;font-size:12px;font-weight:600;padding:0 12px;cursor:pointer;border-radius:var(--rad);height:36px}
+.btn.p{flex:1;background:#000;color:#fff}
+body.paper .btn{font:400 17px var(--hand);background:#fff;border:1.5px solid var(--line)}
+body.paper .btn.p{background:#B5543C;border-color:#B5543C;color:#FFFDF7}
+/* tab bar */
+.tabs{flex:none;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--sheet);padding:4px 0 14px}
+body.paper .tabs{border-color:#d8c7a8}
+.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:9.5px;font-weight:600;color:var(--muted);cursor:pointer;padding:2px 0}
+body.paper .tabs button{font:400 13px var(--hand)}
+.tabs svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabs .on{color:var(--acc)}
+.ghost{position:fixed;pointer-events:none;z-index:50;padding:5px 9px;background:var(--acc);color:#fff;font:600 11px var(--font);border-radius:var(--rad);transform:translate(-50%,-130%);display:none;white-space:nowrap}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+@media(max-width:780px){.side{width:100%;max-width:390px;padding-top:0}}
+@media(max-width:430px){.wrap{padding:0}.phone{border:0;border-radius:0;height:100dvh;min-height:720px}.side{padding:16px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+ <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+ <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 13v7h14v-7"/></symbol>
+ <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+ <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3"/></symbol>
+ <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3"/></symbol>
+ <symbol id="i-rl" viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8M3 3v5h5"/></symbol>
+ <symbol id="i-rr" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-9-9 9 9 0 016.4 2.6L21 8M21 3v5h-5"/></symbol>
+ <symbol id="i-wall" viewBox="0 0 24 24"><path d="M3 20h18M5 20V9l7-4 7 4v11"/></symbol>
+ <symbol id="i-grid" viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></symbol>
+ <symbol id="i-mag" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 14h6v6h-6zM10 7h4a3 3 0 013 3v4"/></symbol>
+ <symbol id="i-rot" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7"/></symbol>
+ <symbol id="i-skin" viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18c1.5 0 2-1 2-2s-1-1.5-1-2.5S14 15 15 15h2a4 4 0 004-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10" r="1"/></symbol>
+ <symbol id="i-dup" viewBox="0 0 24 24"><path d="M8 8h12v12H8zM4 16V4h12"/></symbol>
+ <symbol id="i-lock" viewBox="0 0 24 24"><path d="M6 11h12v10H6zM8 11V7a4 4 0 018 0v4"/></symbol>
+ <symbol id="i-del" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+ <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+ <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/></symbol>
+ <symbol id="i-plan" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></symbol>
+ <symbol id="i-brush" viewBox="0 0 24 24"><path d="M14 4l6 6-8 8H6v-6zM4 20l2-2"/></symbol>
+ <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol>
+ <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></symbol>
+</svg>
+<div class="wrap">
+  <aside class="side">
+    <h1>REMNANT<br>Placement</h1>
+    <div class="sw" role="group" aria-label="Style">
+      <button id="stA" class="on">A · Blueprint</button>
+      <button id="stB">B · Paper</button>
+    </div>
+    <dl class="keys">
+      <dt>Add</dt><dd>Drag a card into the room, or tap it</dd>
+      <dt>Move</dt><dd>Drag an item</dd>
+      <dt>Orbit</dt><dd>⟲ ⟳ · swipe empty floor · ← →</dd>
+      <dt>Rotate</dt><dd>Select · ↻ or R</dd>
+      <dt>Reskin</dt><dd>Select · colour dots</dd>
+      <dt>Delete</dt><dd>Select · bin or Delete</dd>
+      <dt>Undo</dt><dd>⌘Z · ⇧⌘Z</dd>
+    </dl>
+  </aside>
+
+  <div class="phone" id="phone">
+    <div class="status"><span>9:41</span><span>●●● ◠ ▮</span></div>
+    <div class="hdr">
+      <button class="ib" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+      <div class="t"><b>Seoyeon Pop-up</b><small id="sub">The Hyundai B2 · 6 × 4 m · Dec 4–10</small></div>
+      <div class="av"><i style="background:#7E9A6E">SY</i><i style="background:#B5543C">YJ</i></div>
+      <button class="ib" id="shareBtn" aria-label="Share"><svg><use href="#i-share"/></svg></button>
+      <button class="ib" aria-label="More"><svg><use href="#i-more"/></svg></button>
+    </div>
+    <div class="steps"><div class="done">1 Space</div><div class="done">2 Reskin</div><div class="cur">3 Place</div><div>4 Quote</div></div>
+    <div class="tb">
+      <div class="seg" id="modeSeg">
+        <button data-m="plan">Plan</button><button data-m="iso" class="on">Iso</button><button data-m="label">Labels</button><button data-m="ar" class="dis">AR</button>
+      </div>
+      <span class="sp"></span>
+      <button class="ib" id="undoBtn" aria-label="Undo"><svg><use href="#i-undo"/></svg></button>
+      <button class="ib" id="redoBtn" aria-label="Redo"><svg><use href="#i-redo"/></svg></button>
+      <button class="ib" id="rotL" aria-label="Orbit left"><svg><use href="#i-rl"/></svg></button>
+      <button class="ib" id="rotR" aria-label="Orbit right"><svg><use href="#i-rr"/></svg></button>
+      <button class="ib on" id="wallBtn" aria-label="Wall height"><svg><use href="#i-wall"/></svg></button>
+      <button class="ib on" id="gridBtn" aria-label="Grid"><svg><use href="#i-grid"/></svg></button>
+      <button class="ib on" id="snapBtn" aria-label="Snap"><svg><use href="#i-mag"/></svg></button>
+    </div>
+    <div class="stage" id="stage">
+      <div class="ov" style="left:8px;top:8px"><span class="pill" id="angle">45°</span><span class="pill" id="count">4 items</span></div>
+      <div class="ov" style="left:8px;bottom:8px;flex-wrap:wrap;right:46px" id="checks"></div>
+      <div class="ov zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
+      <div class="tool" id="tool">
+        <button data-a="rot" title="Rotate 90°"><svg><use href="#i-rot"/></svg></button>
+        <button data-a="skin" title="Next skin"><svg><use href="#i-skin"/></svg></button>
+        <button data-a="dup" title="Duplicate"><svg><use href="#i-dup"/></svg></button>
+        <button data-a="lock" title="Lock"><svg><use href="#i-lock"/></svg></button>
+        <button data-a="del" title="Remove"><svg><use href="#i-del"/></svg></button>
+      </div>
+      <svg id="svg" role="img" aria-label="Isometric pop-up room"></svg>
+      <div class="toast" id="toast"></div>
+    </div>
+    <div class="insp" id="insp"></div>
+    <div class="tray">
+      <div class="trh"><b>Materials</b><label class="search"><svg><use href="#i-search"/></svg><input id="q" placeholder="Search shelf, rack, linen…" aria-label="Search materials"></label></div>
+      <div class="fl" id="fl"><button class="chip on" data-t="all">All 7</button><button class="chip" data-t="saved">Saved</button><button class="chip" data-t="ai">AI picks</button><button class="chip" data-t="new">New</button><button class="chip" data-t="near">≤ 10 km</button><button class="chip" data-t="a">Grade A</button></div>
+      <div class="cards" id="cards"></div>
+      <div class="sum"><span id="area">Floor 0%</span><div class="m"><i id="bm"></i></div><span id="bt">₩0 / 3.0M</span></div>
+    </div>
+    <div class="cta" style="padding:0 10px 6px;background:var(--sheet)"><button class="btn" id="saveBtn">Save</button><button class="btn p" id="nextBtn">Review quote →</button></div>
+    <nav class="tabs">
+      <button><svg><use href="#i-home"/></svg>Explore</button>
+      <button class="on"><svg><use href="#i-plan"/></svg>Plan</button>
+      <button><svg><use href="#i-brush"/></svg>Reskin</button>
+      <button><svg><use href="#i-box"/></svg>Orders</button>
+      <button><svg><use href="#i-user"/></svg>Me</button>
+    </nav>
+  </div>
+</div>
+<div class="ghost" id="ghost"></div>
+
+<script>
+{
+const ROOM={W:6,D:4};const BUDGET=3000000;const DOOR={x0:2.52,x1:3.52};
+const CAT={
+ shelf:{id:'#6257',name:'Steel display shelf',from:'CHUBBY CLUB · Seongsu',grade:'A',km:11,pick:'Dec 1',W:1.2,D:.4,H:1.8,price:180000,tags:['saved','ai'],
+  skins:[{n:'CHUBBY Yellow',m:'Gloss yellow + character graphics',c:{f:'#F2C94C',b:'#F2C94C',a:'#7FB6E0'},cost:0},{n:'Cream & Oak',m:'Matte cream + oak ply top',c:{f:'#EFE6D2',b:'#C49A6C',a:'#FFFFFF'},cost:70000},{n:'Noir',m:'Black powder coat + ash ply',c:{f:'#2E2E2E',b:'#D8CBB8',a:'#2E2E2E'},cost:20000}],
+  parts:(c,W,D,H)=>[[0,0,0,.05,D,H,c.f],[W-.05,0,0,.05,D,H,c.f],[.05,.12,.55,W-.1,.04,.18,c.a],[.05,0,.08,W-.1,D,.04,c.b],[.05,0,.62,W-.1,D,.04,c.b],[.05,0,1.16,W-.1,D,.04,c.b],[.05,0,1.72,W-.1,D,.06,c.b]]},
+ hanger:{id:'#6241',name:'Garment rack',from:'NOVA · Hannam',grade:'B+',km:6,pick:'Dec 2',W:1.5,D:.5,H:1.55,price:130000,tags:['saved'],
+  skins:[{n:'Lace Cream',m:'Cream paint + lace trim',c:{f:'#EFE6D2',g:['#F4EEE2','#9CAF88','#C9A27A','#E8C8C0']},cost:40000},{n:'Black Frame',m:'Original black frame',c:{f:'#2E2E2E',g:['#D9D9D9','#7A7A7A','#BDBDBD','#EDEDED']},cost:0}],
+  parts:(c,W,D,H)=>{const p=[[0,0,0,.06,D,.05,c.f],[W-.06,0,0,.06,D,.05,c.f],[0,D/2-.03,0,.06,.06,H,c.f],[W-.06,D/2-.03,0,.06,.06,H,c.f],[0,D/2-.03,H-.05,W,.06,.05,c.f]];const gw=(W-.3)/4;for(let i=0;i<4;i++)p.push([.15+i*gw+.02,.08,.6,gw-.05,D-.16,.85,c.g[i]]);return p;}},
+ table:{id:'#6253',name:'Birch ply table',from:'Ohesio · Hannam',grade:'A',km:6,pick:'Dec 2',W:1.6,D:.8,H:.45,price:255000,tags:['saved','ai'],
+  skins:[{n:'Oak Oil',m:'Birch ply + oak oil',c:{t:'#C49A6C',l:'#8A6544'},cost:30000},{n:'White',m:'White paint',c:{t:'#F4F1EA',l:'#CFC8BA'},cost:20000}],
+  parts:(c,W,D,H)=>[[.05,.05,0,.06,.06,H-.05,c.l],[W-.11,.05,0,.06,.06,H-.05,c.l],[.05,D-.11,0,.06,.06,H-.05,c.l],[W-.11,D-.11,0,.06,.06,H-.05,c.l],[0,0,H-.05,W,D,.05,c.t]]},
+ curtain:{id:'#6250',name:'Linen curtain partition',from:'Gallery strike · Seongsu',grade:'A',km:11,pick:'Dec 1',W:1.4,D:.3,H:2.0,price:120000,tags:['saved','ai'],
+  skins:[{n:'Sage Linen',m:'Sage green linen',c:{f:'#7A5A3C',p:'#9CAF88'},cost:30000},{n:'Cream Linen',m:'Cream linen',c:{f:'#7A5A3C',p:'#EFE6D2'},cost:30000}],
+  parts:(c,W,D,H)=>[[0,0,0,.06,D,.05,c.f],[W-.06,0,0,.06,D,.05,c.f],[0,D/2-.03,0,.06,.06,H,c.f],[W-.06,D/2-.03,0,.06,.06,H,c.f],[.06,D/2-.04,.05,W-.12,.08,H-.12,c.p]]},
+ acrylic:{id:'#6247',name:'Acrylic cubes ×3',from:'NOVA · Hannam',grade:'A',km:6,pick:'Dec 2',W:.4,D:.4,H:1.2,price:64000,tags:['ai'],
+  skins:[{n:'Clear',m:'Clear acrylic',c:{a:'#DDEFF5'},cost:0}],
+  parts:(c,W,D,H)=>[[0,0,0,W,D,.4,c.a],[0,0,.4,W,D,.4,c.a],[0,0,.8,W,D,.4,c.a]]},
+ photo:{id:'#6188',name:'Photo arch + plinth',from:'Brand event · Jamsil',grade:'B',km:18,pick:'Dec 2',W:1.2,D:1.0,H:2.0,price:90000,tags:['ai'],
+  skins:[{n:'Rose & Cream',m:'Rose paint + cream plinth',c:{a:'#E8C8C0',s:'#EFE6D2'},cost:40000},{n:'Sage',m:'Sage paint + wood plinth',c:{a:'#9CAF88',s:'#C49A6C'},cost:40000}],
+  parts:(c,W,D,H)=>[[0,0,0,W,D,.2,c.s],[0,0,.2,W,.08,H-.2,c.a]]},
+ fitting:{id:'NEW',name:'Fitting booth',from:'New purchase',grade:'New',km:0,pick:'Dec 3',W:1.0,D:1.0,H:2.1,price:135000,tags:['new'],
+  skins:[{n:'Sage',m:'Sage linen + brown rail',c:{f:'#7A5A3C',p:'#7E9A6E'},cost:0}],
+  parts:(c,W,D,H)=>[[0,0,H-.04,W,.04,.04,c.f],[W-.04,0,H-.04,.04,D,.04,c.f],[0,0,0,W,.05,H-.06,c.p],[W-.05,0,0,.05,D*.7,H-.06,c.p]]}
+};
+const SWK={shelf:'f',hanger:'f',table:'t',curtain:'p',acrylic:'a',photo:'a',fitting:'p'};const swc=(k,s)=>s.c[SWK[k]];
+const ORDER=['shelf','hanger','table','curtain','acrylic','photo','fitting'];
+const INSTALL=540000;
+let uid=10;
+const init=()=>[{u:1,k:'shelf',x:2.3,y:.05,rot:0,s:1},{u:2,k:'hanger',x:.1,y:.9,rot:1,s:0},{u:3,k:'hanger',x:5.4,y:1.7,rot:1,s:0},{u:4,k:'table',x:2.2,y:1.8,rot:0,s:0}];
+let S={items:init(),view:0,mode:'iso',sel:1,wall:1.1,style:'A',filter:'all',zoom:1,grid:true,snap:true,q:''};
+try{const sv=JSON.parse(localStorage.getItem('remnant-proto-en')||'null');if(sv&&sv.items){Object.assign(S,sv);uid=Math.max(10,...S.items.map(i=>i.u))+1;}}catch(e){}
+const hist=[],fut=[];const push=()=>{hist.push(JSON.stringify(S.items));fut.length=0;if(hist.length>60)hist.shift();};
+const $=id=>document.getElementById(id);const svg=$('svg');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const won=n=>'₩'+n.toLocaleString('en-US');
+const dims=it=>{const c=CAT[it.k];return it.rot%2?{w:c.D,d:c.W}:{w:c.W,d:c.D};};
+const VWD=r=>r%2?{VW:ROOM.D,VD:ROOM.W}:{VW:ROOM.W,VD:ROOM.D};
+const w2v=(x,y,r)=>{const {W,D}=ROOM;return r===0?[x,y]:r===1?[y,W-x]:r===2?[W-x,D-y]:[D-y,x];};
+const v2w=(vx,vy,r)=>{const {W,D}=ROOM;return r===0?[vx,vy]:r===1?[W-vy,vx]:r===2?[W-vx,D-vy]:[vy,D-vx];};
+const rr=(a,b,c,d,rot,W,D)=>{const t=(x,y)=>rot===0?[x,y]:rot===1?[y,W-x]:rot===2?[W-x,D-y]:[D-y,x];const p=t(a,b),q=t(a+c,b+d);return [Math.min(p[0],q[0]),Math.min(p[1],q[1]),Math.abs(q[0]-p[0]),Math.abs(q[1]-p[1])];};
+const shade=(h,f)=>{const n=parseInt(h.slice(1),16);const r=Math.round((n>>16&255)*f),g=Math.round((n>>8&255)*f),b=Math.round((n&255)*f);return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);};
+const mix=(h,w)=>{const n=parseInt(h.slice(1),16);const m=v=>Math.round(v+(255-v)*w);return '#'+((1<<24)+(m(n>>16&255)<<16)+(m(n>>8&255)<<8)+m(n&255)).toString(16).slice(1);};
+let G={};
+function proj(cw,ch,r,top=0){const {VW,VD}=VWD(r);const H=S.wall;const k=S.zoom*Math.min((cw-36)/((VW+VD)*.866),(ch-top-44)/((VW+VD)*.5+H));const c=k*.866;const ox=(cw-(VW+VD)*c)/2+VD*c;const oy=top+(ch-top-((VW+VD)*.5+H)*k)/2+H*k+4;return {k,c,ox,oy,VW,VD,P:(x,y,z)=>[ox+(x-y)*c,oy+(x+y)*k/2-z*k]};}
+const pts=a=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+function faces(P,x0,x1,y0,y1,z0,z1,col,st,op){const A=st==='A'||st==='WA';const fill=f=>st==='WA'?'#FFFFFF':A?mix(shade(col,f),.55):shade(col,f);const s=A?'#0000DB':'#4A3826';const sw=A?1:.8;const o=op?` fill-opacity="${op}"`:'';
+ return `<polygon points="${pts([P(x1,y0,z0),P(x1,y0,z1),P(x1,y1,z1),P(x1,y1,z0)])}" fill="${fill(.78)}"${o} stroke="${s}" stroke-width="${sw}" stroke-linejoin="round"/><polygon points="${pts([P(x0,y1,z0),P(x1,y1,z0),P(x1,y1,z1),P(x0,y1,z1)])}" fill="${fill(.9)}"${o} stroke="${s}" stroke-width="${sw}" stroke-linejoin="round"/><polygon points="${pts([P(x0,y0,z1),P(x1,y0,z1),P(x1,y1,z1),P(x0,y1,z1)])}" fill="${fill(1)}"${o} stroke="${s}" stroke-width="${sw}" stroke-linejoin="round"/>`;}
+function itemParts(it){const c=CAT[it.k];const sk=c.skins[it.s]||c.skins[0];return c.parts(sk.c,c.W,c.D,c.H).map(p=>{const [a,b,w,d]=rr(p[0],p[1],p[3],p[4],it.rot,c.W,c.D);return {x:it.x+a,y:it.y+b,w,d,z:p[2],h:p[5],col:p[6]};});}
+const hit=(a,b,m=0)=>{const A=dims(a),B=dims(b);return a.x<b.x+B.w+m-.01&&a.x+A.w+m>b.x+.01&&a.y<b.y+B.d+m-.01&&a.y+A.d+m>b.y+.01;};
+const overlaps=it=>S.items.some(o=>o!==it&&hit(it,o));
+// checks
+function checks(){let ov=0;for(let i=0;i<S.items.length;i++)for(let j=i+1;j<S.items.length;j++)if(hit(S.items[i],S.items[j]))ov++;
+ let tight=0;for(let i=0;i<S.items.length;i++)for(let j=i+1;j<S.items.length;j++)if(!hit(S.items[i],S.items[j])&&hit(S.items[i],S.items[j],.9))tight++;
+ const door=!S.items.some(it=>{const d=dims(it);return it.y+d.d>ROOM.D-1&&it.x<DOOR.x1&&it.x+d.w>DOOR.x0;});
+ const area=S.items.reduce((a,it)=>{const d=dims(it);return a+d.w*d.d;},0)/(ROOM.W*ROOM.D);
+ const tot=S.items.reduce((a,it)=>a+CAT[it.k].price+CAT[it.k].skins[it.s].cost,0)+INSTALL;return {ov,tight,door,area,tot};}
+function render(){const st=S.style;const cw=svg.clientWidth||370,ch=svg.clientHeight||300;svg.setAttribute('viewBox',`0 0 ${cw} ${ch}`);
+ if(S.mode==='plan')return renderPlan(cw,ch);
+ const r=S.view;const pr=proj(cw,ch,r,S.mode==='label'?92:16);G=pr;const {P,VW,VD}=pr;const A=st==='A';const line=A?'#0000DB':'#4A3826';let h='';
+ h+=`<polygon points="${pts([P(0,0,0),P(VW,0,0),P(VW,VD,0),P(0,VD,0)])}" fill="${A?'#FFFFFF':'#E8D9C0'}" stroke="${line}" stroke-width="1.2"/>`;
+ if(S.grid){const gc=A?'#C8C8F5':'#D4C2A3';for(let i=.5;i<VW;i+=.5)h+=`<line x1="${P(i,0,0)[0]}" y1="${P(i,0,0)[1]}" x2="${P(i,VD,0)[0]}" y2="${P(i,VD,0)[1]}" stroke="${gc}" stroke-width="${i%1?.35:.7}"/>`;for(let j=.5;j<VD;j+=.5)h+=`<line x1="${P(0,j,0)[0]}" y1="${P(0,j,0)[1]}" x2="${P(VW,j,0)[0]}" y2="${P(VW,j,0)[1]}" stroke="${gc}" stroke-width="${j%1?.35:.7}"/>`;}
+ const wc=A?'#FFFFFF':'#C98F6E',WS=A?'WA':'B',t=.15,H=S.wall;const cap=(x0,x1,y0,y1,z)=>A?`<polygon points="${pts([P(x0,y0,z),P(x1,y0,z),P(x1,y1,z),P(x0,y1,z)])}" fill="#0000DB"/>`:'';
+ h+=faces(P,-t,VW,-t,0,0,H,wc,WS)+cap(-t,VW,-t,0,H)+faces(P,-t,0,0,VD,0,H,wc,WS)+cap(-t,0,0,VD,H);
+ // door zone on floor (world)
+ const dz=[[DOOR.x0,ROOM.D-1],[DOOR.x1,ROOM.D-1],[DOOR.x1,ROOM.D],[DOOR.x0,ROOM.D]].map(([x,y])=>{const v=w2v(x,y,r);return P(v[0],v[1],0);});
+ h+=`<polygon points="${pts(dz)}" fill="${A?'#0000DB':'#B5543C'}" fill-opacity=".07" stroke="${A?'#0000DB':'#B5543C'}" stroke-width=".8" stroke-dasharray="3 3"/>`;
+ const sel=S.items.find(i=>i.u===S.sel);
+ if(sel){const d=dims(sel);const [ax,ay]=w2v(sel.x,sel.y,r),[bx,by]=w2v(sel.x+d.w,sel.y+d.d,r);const x0=Math.min(ax,bx),x1=Math.max(ax,bx),y0=Math.min(ay,by),y1=Math.max(ay,by);const bad=overlaps(sel);const ac=bad?'#D00000':(A?'#0000DB':'#B5543C');
+  h+=`<polygon points="${pts([P(x0,y0,0),P(x1,y0,0),P(x1,y1,0),P(x0,y1,0)])}" fill="${ac}" fill-opacity=".1" stroke="${ac}" stroke-width="1.5" stroke-dasharray="5 3"/>`;
+  const m1=P((x0+x1)/2,y1+.25,0);h+=`<text x="${m1[0]}" y="${m1[1]+10}" text-anchor="middle" font-size="9" font-family="Inter" font-weight="600" fill="${ac}">${Math.round((x1-x0)*100)} × ${Math.round((y1-y0)*100)} cm</text>`;}
+ let all=[];for(const it of S.items){for(const p of itemParts(it)){const [ax,ay]=w2v(p.x,p.y,r),[bx,by]=w2v(p.x+p.w,p.y+p.d,r);const x0=Math.min(ax,bx),x1=Math.max(ax,bx),y0=Math.min(ay,by),y1=Math.max(ay,by);all.push({u:it.u,x0,x1,y0,y1,z0:p.z,z1:p.z+p.h,col:p.col,key:x1+y1+x0+y0+p.z*.01,op:it.k==='acrylic'?.55:0});}}
+ all.sort((a,b)=>a.key-b.key);for(const p of all)h+=`<g data-u="${p.u}" style="cursor:grab">${faces(P,p.x0,p.x1,p.y0,p.y1,p.z0,p.z1,p.col,st,p.op)}</g>`;
+ h+=faces(P,0,VW*.42,VD,VD+t,0,.2,wc,WS)+cap(0,VW*.42,VD,VD+t,.2)+faces(P,VW*.42+1,VW+t,VD,VD+t,0,.2,wc,WS)+cap(VW*.42+1,VW+t,VD,VD+t,.2)+faces(P,VW,VW+t,-t,VD,0,.2,wc,WS)+cap(VW,VW+t,-t,VD,.2);
+ // compass
+ const nv=w2v(ROOM.W/2,-.6,r),cp=P(nv[0],nv[1],0);
+ if(sel&&S.mode==='iso'){const c=CAT[sel.k];const d=dims(sel);const [cx,cy]=w2v(sel.x+d.w/2,sel.y+d.d/2,r);const tp=P(cx,cy,c.H);const ac=A?'#0000DB':'#B5543C';
+  h+=`<line x1="${tp[0]}" y1="${tp[1]}" x2="${tp[0]}" y2="${tp[1]-18}" stroke="${ac}" stroke-width="1.2"/><g data-h="rot" style="cursor:pointer"><circle cx="${tp[0]}" cy="${tp[1]-28}" r="10" fill="${ac}"/><path d="M${tp[0]+4} ${tp[1]-29}a4 4 0 1 1-1.2-2.9M${tp[0]+4} ${tp[1]-34}v4h-4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></g>`;
+  const tl=$('tool');tl.style.left=Math.max(80,Math.min(cw-80,tp[0]))+'px';tl.style.top=Math.max(30,tp[1]-74)+'px';}
+ if(S.mode==='label')h+=callouts(P,r,cw,A);
+ svg.innerHTML=h;}
+const mctx=document.createElement('canvas').getContext('2d');const tw=(t,f)=>{mctx.font=f;return mctx.measureText(t).width;};
+function callouts(P,r,cw,A){const f1=A?'700 9px Inter':'15px "Patrick Hand"',f2=A?'9.5px Inter':'13px "Patrick Hand"';
+ const L=S.items.map(it=>{const c=CAT[it.k],sk=c.skins[it.s];const d=dims(it);const [cx,cy]=w2v(it.x+d.w/2,it.y+d.d/2,r);const tp=P(cx,cy,c.H);const t1=c.id+' '+c.name;const w=Math.max(tw(A?t1.toUpperCase():t1,f1)*(A?1.06:1),tw(sk.m,f2))+12;return {tp,t1,t2:sk.m,u:it.u,w};}).sort((a,b)=>a.tp[0]-b.tp[0]);
+ let h='';const cols={L:0,R:0};L.forEach(l=>{const side=l.tp[0]<cw/2?'L':'R';const row=cols[side]++;const x=side==='L'?6:cw-l.w-6;const y=8+row*29;const col=l.u===S.sel?(A?'#0000DB':'#B5543C'):(A?'#111':'#3B2E22');const ex=side==='L'?x+l.w:x,ey=y+12;
+  h+=`<polyline points="${ex},${ey} ${l.tp[0]},${ey} ${l.tp[0]},${l.tp[1]-2}" fill="none" stroke="${col}" stroke-width=".8" stroke-dasharray="3 3"/><circle cx="${l.tp[0]}" cy="${l.tp[1]}" r="2.5" fill="${col}"/>`;
+  h+=A?`<rect x="${x}" y="${y-2}" width="${l.w}" height="25" fill="#fff" stroke="${col}"/><text x="${x+6}" y="${y+9}" font-size="9" font-weight="700" font-family="Inter" fill="${col}" letter-spacing=".04em">${esc(l.t1.toUpperCase())}</text><text x="${x+6}" y="${y+19.5}" font-size="9.5" font-family="Inter" fill="#111">${esc(l.t2)}</text>`
+      :`<rect x="${x}" y="${y-2}" width="${l.w}" height="27" rx="4" fill="#E4D3B4"/><text x="${x+6}" y="${y+10}" font-size="15" font-family="'Patrick Hand', Inter, sans-serif" fill="${col}">${esc(l.t1)}</text><text x="${x+6}" y="${y+22}" font-size="13" font-family="'Patrick Hand', Inter, sans-serif" fill="#4A3826">${esc(l.t2)}</text>`;});
+ return h;}
+function renderPlan(cw,ch){const A=S.style==='A';const k=S.zoom*Math.min((cw-56)/ROOM.W,(ch-80)/ROOM.D);const ox=(cw-ROOM.W*k)/2,oy=(ch-ROOM.D*k)/2;G={plan:true,k,ox,oy};const line=A?'#0000DB':'#4A3826';let h='';
+ h+=`<rect x="${ox}" y="${oy}" width="${ROOM.W*k}" height="${ROOM.D*k}" fill="${A?'#fff':'#F7EFE0'}"/>`;
+ if(S.grid){const gc=A?'#C8C8F5':'#D4C2A3';for(let x=0;x<=ROOM.W;x+=.5)h+=`<line x1="${ox+x*k}" y1="${oy}" x2="${ox+x*k}" y2="${oy+ROOM.D*k}" stroke="${gc}" stroke-width="${x%1?.4:.9}"/>`;for(let y=0;y<=ROOM.D;y+=.5)h+=`<line x1="${ox}" y1="${oy+y*k}" x2="${ox+ROOM.W*k}" y2="${oy+y*k}" stroke="${gc}" stroke-width="${y%1?.4:.9}"/>`;}
+ h+=`<path d="M ${ox+DOOR.x0*k} ${oy+ROOM.D*k} L ${ox} ${oy+ROOM.D*k} L ${ox} ${oy} L ${ox+ROOM.W*k} ${oy} L ${ox+ROOM.W*k} ${oy+ROOM.D*k} L ${ox+DOOR.x1*k} ${oy+ROOM.D*k}" fill="none" stroke="${A?'#0000DB':'#C98F6E'}" stroke-width="7"/>`;
+ h+=`<path d="M ${ox+DOOR.x0*k} ${oy+ROOM.D*k} L ${ox+DOOR.x0*k} ${oy+(ROOM.D-1)*k} A ${k} ${k} 0 0 1 ${ox+DOOR.x1*k} ${oy+ROOM.D*k}" fill="none" stroke="${line}" stroke-dasharray="3 3"/>`;
+ for(const it of S.items){const c=CAT[it.k],sk=c.skins[it.s];const d=dims(it);const col=swc(it.k,sk);const on=it.u===S.sel;const bad=on&&overlaps(it);
+  h+=`<g data-u="${it.u}" style="cursor:grab"><rect x="${ox+it.x*k}" y="${oy+it.y*k}" width="${d.w*k}" height="${d.d*k}" fill="${A?mix(col,.5):col}" stroke="${bad?'#D00000':on?(A?'#0000DB':'#B5543C'):line}" stroke-width="${on?2:1}" ${on?'stroke-dasharray="5 3"':''} rx="${A?0:3}"/><text x="${ox+(it.x+d.w/2)*k}" y="${oy+(it.y+d.d/2)*k+3.5}" text-anchor="middle" font-size="${A?9:13}" font-weight="700" font-family="${A?'Inter':'Patrick Hand'}" fill="${A?'#000':'#3B2E22'}">${esc(c.id)}</text></g>`;}
+ h+=`<text x="${ox+ROOM.W*k/2}" y="${oy-10}" text-anchor="middle" font-size="10" font-family="Inter" fill="${line}">6,000 mm</text><text x="${ox+ROOM.W*k+14}" y="${oy+ROOM.D*k/2}" font-size="10" font-family="Inter" fill="${line}" transform="rotate(90 ${ox+ROOM.W*k+14} ${oy+ROOM.D*k/2})" text-anchor="middle">4,000 mm</text><text x="${ox+(DOOR.x0+.5)*k}" y="${oy+ROOM.D*k+18}" text-anchor="middle" font-size="10" font-weight="700" font-family="Inter" fill="${A?'#0000DB':'#B5543C'}">ENTRANCE</text>`;
+ svg.innerHTML=h;}
+function toSvg(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const m=svg.getScreenCTM();return m?p.matrixTransform(m.inverse()):{x:0,y:0};}
+function toWorld(e){const q=toSvg(e);if(G.plan)return [(q.x-G.ox)/G.k,(q.y-G.oy)/G.k];const a=(q.x-G.ox)/G.c,b=(q.y-G.oy)*2/G.k;return v2w((a+b)/2,(b-a)/2,S.view);}
+const snap=v=>S.snap?Math.round(v*10)/10:Math.round(v*100)/100;
+function clampIt(it){const d=dims(it);it.x=Math.max(0,Math.min(ROOM.W-d.w,snap(it.x)));it.y=Math.max(0,Math.min(ROOM.D-d.d,snap(it.y)));}
+function findFree(it){if(!overlaps(it))return;const x0=it.x,y0=it.y;for(let rad=.2;rad<4;rad+=.2)for(let a=0;a<16;a++){it.x=x0+Math.cos(a/16*Math.PI*2)*rad;it.y=y0+Math.sin(a/16*Math.PI*2)*rad;clampIt(it);if(!overlaps(it))return;}it.x=x0;it.y=y0;}
+let drag=null;
+svg.addEventListener('pointerdown',e=>{if(e.target.closest('[data-h]')){act('rot');return;}const g=e.target.closest('[data-u]');if(g){const u=+g.dataset.u;const it=S.items.find(i=>i.u===u);S.sel=u;if(it.lock){update();toast('Locked — unlock to move');return;}push();const w=toWorld(e);drag={it,dx:w[0]-it.x,dy:w[1]-it.y,moved:false};}else{drag={swipe:true,sx:e.clientX};S.sel=null;update();}svg.setPointerCapture(e.pointerId);});
+svg.addEventListener('pointermove',e=>{if(!drag)return;if(drag.swipe){const dx=e.clientX-drag.sx;if(Math.abs(dx)>70&&S.mode!=='plan'){turn(dx>0?-1:1);drag.sx=e.clientX;}return;}const w=toWorld(e);drag.it.x=w[0]-drag.dx;drag.it.y=w[1]-drag.dy;clampIt(drag.it);drag.moved=true;render();renderChecks();});
+svg.addEventListener('pointerup',()=>{if(drag&&drag.it&&!drag.moved)hist.pop();if(drag&&drag.it&&drag.moved&&overlaps(drag.it))toast('Overlapping another item',true);drag=null;update();});
+svg.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY<0?1.1:1/1.1);},{passive:false});
+function turn(d){S.view=(S.view+d+4)%4;update();}
+function zoom(f){S.zoom=Math.max(.7,Math.min(1.8,S.zoom*f));update();}
+$('rotL').onclick=()=>turn(-1);$('rotR').onclick=()=>turn(1);$('zin').onclick=()=>zoom(1.15);$('zout').onclick=()=>zoom(1/1.15);
+$('wallBtn').onclick=()=>{S.wall=S.wall>1?.3:1.1;update();};$('gridBtn').onclick=()=>{S.grid=!S.grid;update();};$('snapBtn').onclick=()=>{S.snap=!S.snap;update();toast(S.snap?'Snap 10 cm':'Free move');};
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{if(b.dataset.m==='ar'){toast('AR opens on your phone camera');return;}S.mode=b.dataset.m;update();});
+document.querySelectorAll('#fl .chip').forEach(b=>b.onclick=()=>{S.filter=b.dataset.t;update();});
+$('q').oninput=e=>{S.q=e.target.value;renderCards();};
+function act(a){const it=S.items.find(i=>i.u===S.sel);if(!it)return;push();const c=CAT[it.k];
+ if(a==='rot'){if(it.lock){hist.pop();toast('Locked');return;}const d0=dims(it);const cx=it.x+d0.w/2,cy=it.y+d0.d/2;it.rot=(it.rot+1)%4;const d=dims(it);it.x=cx-d.w/2;it.y=cy-d.d/2;clampIt(it);}
+ if(a==='skin'){it.s=(it.s+1)%c.skins.length;toast(c.skins[it.s].n);}
+ if(a==='dup'){const n={...it,u:uid++,lock:false,x:it.x+.3,y:it.y+.3};clampIt(n);S.items.push(n);findFree(n);S.sel=n.u;toast('Duplicated');}
+ if(a==='lock'){it.lock=!it.lock;toast(it.lock?'Locked':'Unlocked');}
+ if(a==='del'){S.items=S.items.filter(i=>i!==it);S.sel=null;toast('Removed · undo with ⌘Z');}
+ update();}
+document.querySelectorAll('#tool button').forEach(b=>b.onclick=()=>act(b.dataset.a));
+const undo=()=>{const p=hist.pop();if(p){fut.push(JSON.stringify(S.items));S.items=JSON.parse(p);if(!S.items.some(i=>i.u===S.sel))S.sel=null;update();}};
+const redo=()=>{const p=fut.pop();if(p){hist.push(JSON.stringify(S.items));S.items=JSON.parse(p);update();}};
+$('undoBtn').onclick=undo;$('redoBtn').onclick=redo;
+$('saveBtn').onclick=()=>toast('Saved · Plan #0412');$('shareBtn').onclick=()=>toast('Link ready to share');
+$('nextBtn').onclick=()=>{const c=checks();toast(c.ov?'Fix overlaps first':'Quote: '+won(c.tot),!!c.ov);};
+function thumb(k,s){const c=CAT[k];const parts=itemParts({k,x:0,y:0,rot:0,s});const kk=20,cc=kk*.866;const P=(x,y,z)=>[(x-y)*cc,(x+y)*kk/2-z*kk];let a=1e9,b=1e9,e=-1e9,f=-1e9;for(const [x,y,z] of [[0,0,0],[c.W,0,0],[0,c.D,0],[c.W,c.D,0],[0,0,c.H],[c.W,0,c.H],[0,c.D,c.H],[c.W,c.D,c.H]]){const q=P(x,y,z);a=Math.min(a,q[0]);e=Math.max(e,q[0]);b=Math.min(b,q[1]);f=Math.max(f,q[1]);}
+ return `<svg viewBox="${a-5} ${b-5} ${e-a+10} ${f-b+10}">${parts.map(p=>({...p,key:p.x+p.w+p.y+p.d})).sort((x,y)=>x.key-y.key).map(p=>faces(P,p.x,p.x+p.w,p.y,p.y+p.d,p.z,p.z+p.h,p.col,S.style,k==='acrylic'?.55:0)).join('')}</svg>`;}
+function renderCards(){const q=S.q.trim().toLowerCase();const list=ORDER.filter(k=>{const c=CAT[k];const f=S.filter;const okF=f==='all'||(f==='near'?c.km>0&&c.km<=10:f==='a'?c.grade==='A':c.tags.includes(f));const okQ=!q||(c.name+' '+c.id+' '+c.skins.map(s=>s.m).join(' ')).toLowerCase().includes(q);return okF&&okQ;});
+ $('cards').innerHTML=list.length?list.map(k=>{const c=CAT[k];const n=S.items.filter(i=>i.k===k).length;return `<button class="card" data-k="${k}" aria-label="Add ${esc(c.name)}"><span class="g">${esc(c.grade)}</span>${n?`<span class="n">×${n}</span>`:''}${thumb(k,k==='shelf'?1:0)}<div class="cb"><b>${esc(c.name)}</b><span>${won(c.price)}</span><span>${c.km?c.km+' km · '+esc(c.pick):'Ships '+esc(c.pick)}</span></div></button>`;}).join(''):`<div style="font-size:11px;color:var(--muted);padding:18px 4px">No materials match</div>`;
+ $('cards').querySelectorAll('.card').forEach(b=>b.addEventListener('pointerdown',startTray));}
+let tray=null;const ghost=$('ghost');
+function startTray(e){const el=e.currentTarget;const k=el.dataset.k;tray={k,sx:e.clientX,sy:e.clientY,moved:false};el.setPointerCapture(e.pointerId);
+ el.onpointermove=ev=>{if(!tray)return;if(!tray.moved&&Math.hypot(ev.clientX-tray.sx,ev.clientY-tray.sy)<8)return;tray.moved=true;ghost.style.display='block';ghost.textContent='+ '+CAT[k].name;ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';};
+ el.onpointerup=ev=>{const t=tray;tray=null;ghost.style.display='none';el.onpointermove=null;el.onpointerup=null;if(!t)return;const r=svg.getBoundingClientRect();const inside=ev.clientX>r.left&&ev.clientX<r.right&&ev.clientY>r.top&&ev.clientY<r.bottom;if(t.moved&&!inside)return;
+  push();if(S.mode==='label')S.mode='iso';const it={u:uid++,k,x:0,y:0,rot:0,s:k==='shelf'?1:0};const d=dims(it);if(t.moved){const w=toWorld(ev);it.x=w[0]-d.w/2;it.y=w[1]-d.d/2;}else{it.x=ROOM.W/2-d.w/2;it.y=ROOM.D/2-d.d/2;}clampIt(it);S.items.push(it);findFree(it);S.sel=it.u;toast('Added '+CAT[k].name);update();};}
+function renderInsp(){const it=S.items.find(i=>i.u===S.sel);const box=$('insp');$('tool').classList.toggle('show',!!it&&S.mode==='iso');
+ if(!it){const c=checks();box.className='insp empty';box.innerHTML=`<div class="mid"><b style="color:var(--ink)">${S.items.length} items placed</b><small>${Math.round(c.area*100)}% floor used · install & transport ${won(INSTALL)}</small></div><div class="rt"><b style="color:var(--ink)">${won(c.tot)}</b><small>est. total</small></div>`;return;}
+ const c=CAT[it.k],sk=c.skins[it.s];const d=dims(it);box.className='insp';
+ box.innerHTML=`<div class="th">${thumb(it.k,it.s)}</div><div class="mid"><b>${esc(c.id)} ${esc(c.name)}${it.lock?' 🔒':''}</b><small>${esc(c.from)} · ${Math.round(d.w*100)}×${Math.round(d.d*100)}×${Math.round(c.H*100)} cm · Grade ${esc(c.grade)}</small><div class="dots">${c.skins.map((s,i)=>{const col=swc(it.k,s);return `<button class="dot${i===it.s?' on':''}" data-s="${i}" style="background:${col}" aria-label="${esc(s.n)}"></button>`;}).join('')}<span>${esc(sk.n)}</span></div></div><div class="rt"><b>${won(c.price+sk.cost)}</b><small>reskin ${won(sk.cost)}</small><button class="mini" id="det">Details</button></div>`;
+ box.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{push();it.s=+b.dataset.s;update();});$('det').onclick=()=>toast('Condition photos · pickup '+c.pick+' · '+(c.km?c.km+' km away':'new stock'));}
+function renderChecks(){const c=checks();const A=S.style==='A';$('checks').innerHTML=`<span class="pill ${c.ov?'bad':'ok'}">${c.ov?c.ov+' overlap':'No overlap ✓'}</span><span class="pill ${c.tight?'bad':'ok'}">${c.tight?'Aisle < 90 cm':'Aisle ≥ 90 cm ✓'}</span><span class="pill ${c.door?'ok':'bad'}">${c.door?'Entrance clear ✓':'Entrance blocked'}</span>`;
+ const p=c.tot/BUDGET;$('bm').style.width=Math.min(100,p*100)+'%';$('bm').style.background=p>1?'#D00000':'';$('bt').textContent=won(c.tot)+' / 3.0M · '+Math.round(p*100)+'%';$('area').textContent='Floor '+Math.round(c.area*100)+'%';}
+let tt;function toast(m,bad){const t=$('toast');t.textContent=m;t.className='toast show'+(bad?' bad':'');clearTimeout(tt);tt=setTimeout(()=>t.className='toast',1600);}
+function update(){document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===S.mode));document.querySelectorAll('#fl .chip').forEach(b=>b.classList.toggle('on',b.dataset.t===S.filter));
+ document.body.classList.toggle('paper',S.style==='B');$('stA').classList.toggle('on',S.style==='A');$('stB').classList.toggle('on',S.style==='B');
+ $('wallBtn').classList.toggle('on',S.wall>1);$('gridBtn').classList.toggle('on',S.grid);$('snapBtn').classList.toggle('on',S.snap);$('undoBtn').disabled=!hist.length;$('redoBtn').disabled=!fut.length;
+ $('angle').textContent=S.mode==='plan'?'Top view':[45,135,225,315][S.view]+'° · '+Math.round(S.zoom*100)+'%';$('count').textContent=S.items.length+' items';document.querySelector('.ov').style.display=S.mode==='label'?'none':'flex';
+ render();renderCards();renderInsp();renderChecks();
+ try{localStorage.setItem('remnant-proto-en',JSON.stringify({items:S.items,view:S.view,style:S.style,wall:S.wall,grid:S.grid,snap:S.snap}));}catch(e){}}
+$('stA').onclick=()=>{S.style='A';update();};$('stB').onclick=()=>{S.style='B';update();};
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowLeft')turn(-1);if(e.key==='ArrowRight')turn(1);if(e.key==='Delete'||e.key==='Backspace')act('del');if(e.key==='r'||e.key==='R')act('rot');if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}});
+const ro=new ResizeObserver(()=>render());ro.observe(svg);
+document.fonts&&document.fonts.ready.then(()=>render());
+update();
+}
+</script>
+</body>
+</html>
